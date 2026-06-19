@@ -19,6 +19,11 @@ import re
 import unicodedata
 from uuid import uuid4
 
+PUBLIC_SITE_URL = os.environ.get(
+    "PUBLIC_SITE_URL",
+    "https://archiw.pl",
+).rstrip("/")
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
@@ -90,7 +95,6 @@ class CartItemIn(BaseModel):
 
 class CheckoutReq(BaseModel):
     items: List[CartItemIn]
-    origin_url: str
 
 
 class AdminDiscountIn(BaseModel):
