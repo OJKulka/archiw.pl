@@ -1,4 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, Request, UploadFile, File
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -34,9 +37,23 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 stripe.api_key = STRIPE_SECRET_KEY
 
+def get_client_ip(request: Request) -> str:
+    return (
+        request.headers.get("CF-Connecting-IP")
+        or get_remote_address(request)
+    )
+
+
+limiter = Limiter(key_func=get_client_ip)
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -597,7 +614,8 @@ async def register(payload: RegisterReq):
 
 
 @api_router.post("/auth/login")
-async def login(payload: LoginReq):
+@limiter.limit("5/minute")
+async def login(request: Request, payload: LoginReq):
     email = payload.email.lower().strip()
     conn = get_db()
     try:
