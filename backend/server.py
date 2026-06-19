@@ -18,6 +18,8 @@ import stripe
 import re
 import unicodedata
 from uuid import uuid4
+from io import BytesIO
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -262,6 +264,88 @@ def _fields_set(model) -> set:
         )
     )
 
+MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
+MAX_IMAGE_PIXELS = 20_000_000
+
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+
+
+def _prepare_product_image(content: bytes) -> bytes:
+    if not content:
+        raise HTTPException(
+            status_code=400,
+            detail="Plik obrazu jest pusty",
+        )
+
+    if len(content) > MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail="Obraz nie może być większy niż 10 MB",
+        )
+
+    try:
+        # Sprawdzenie, czy plik rzeczywiście jest obrazem.
+        with Image.open(BytesIO(content)) as image:
+            image.verify()
+
+        # Po verify() trzeba otworzyć obraz ponownie.
+        with Image.open(BytesIO(content)) as source_image:
+            source_image.seek(0)
+
+            image = ImageOps.exif_transpose(source_image)
+
+            if image.width <= 0 or image.height <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Obraz ma nieprawidłowe wymiary",
+                )
+
+            if image.width * image.height > MAX_IMAGE_PIXELS:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Obraz ma zbyt dużą rozdzielczość",
+                )
+
+            image.load()
+
+            has_transparency = (
+                "A" in image.getbands()
+                or (
+                    image.mode == "P"
+                    and "transparency" in image.info
+                )
+            )
+
+            if has_transparency:
+                image = image.convert("RGBA")
+            else:
+                image = image.convert("RGB")
+
+            output = BytesIO()
+
+            image.save(
+                output,
+                format="WEBP",
+                quality=82,
+                method=6,
+            )
+
+            return output.getvalue()
+
+    except HTTPException:
+        raise
+
+    except (
+        UnidentifiedImageError,
+        Image.DecompressionBombError,
+        OSError,
+        ValueError,
+        SyntaxError,
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Przesłany plik nie jest prawidłowym obrazem",
+        )
 
 def _slugify(value: str) -> str:
     value = unicodedata.normalize("NFKD", value)
@@ -1250,21 +1334,10 @@ async def admin_upload_product_image(
     sort_order: int = 0,
     admin=Depends(require_admin),
 ):
-    allowed_types = {
-        "image/jpeg": ".jpg",
-        "image/png": ".png",
-        "image/webp": ".webp",
-    }
-
-    extension = allowed_types.get(image.content_type or "")
-    if not extension:
-        raise HTTPException(400, "Only JPG, PNG and WEBP files are allowed")
-
+    
+    
     content = await image.read()
-    if not content:
-        raise HTTPException(400, "Empty image file")
-    if len(content) > 10 * 1024 * 1024:
-        raise HTTPException(400, "Image cannot be larger than 10 MB")
+    webp_content = _prepare_product_image(content)
 
     upload_dir = Path(
         os.environ.get(
@@ -1278,7 +1351,7 @@ async def admin_upload_product_image(
     ).rstrip("/")
 
     upload_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{product_id}-{uuid4().hex}{extension}"
+    filename = f"{product_id}-{uuid4().hex}.webp"
     file_path = PRODUCT_IMAGE_DIR / filename
     image_path = f"{PRODUCT_IMAGE_URL_PREFIX}/{filename}"
 
@@ -1289,7 +1362,7 @@ async def admin_upload_product_image(
             if not cur.fetchone():
                 raise HTTPException(404, "Product not found")
 
-            file_path.write_bytes(content)
+            file_path.write_bytes(webp_content)
 
             cur.execute(
                 """
