@@ -1323,7 +1323,12 @@ async def admin_delete_product_image(
 
 
 @api_router.post("/checkout/session")
-async def create_checkout(payload: CheckoutReq, user=Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def create_checkout(
+    request: Request,
+    payload: CheckoutReq,
+    user=Depends(get_current_user),
+):
     if not STRIPE_SECRET_KEY:
         raise HTTPException(500, "Stripe not configured")
     if not payload.items:
