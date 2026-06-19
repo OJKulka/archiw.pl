@@ -600,8 +600,18 @@ async def root():
 @api_router.post("/auth/register")
 async def register(payload: RegisterReq):
     email = payload.email.lower().strip()
-    if len(payload.password) < 6:
-        raise HTTPException(400, "Password must have at least 6 characters")
+    def _validate_password(password: str):
+    if len(password) < 12:
+        raise HTTPException(
+            400,
+            "Password must have at least 12 characters",
+        )
+
+    if len(password) > 32:
+        raise HTTPException(
+            400,
+            "Password cannot have more than 32 characters",
+        )
 
     conn = get_db()
     try:
