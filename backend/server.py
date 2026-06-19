@@ -19,13 +19,13 @@ import re
 import unicodedata
 from uuid import uuid4
 
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / ".env")
+
 PUBLIC_SITE_URL = os.environ.get(
     "PUBLIC_SITE_URL",
     "https://archiw.pl",
 ).rstrip("/")
-
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / ".env")
 
 WEB_ROOT = Path(
     os.environ.get("WEB_ROOT", r"C:\www")
@@ -724,7 +724,7 @@ async def list_products(
                 p.price AS original_price,
                 CASE
                     WHEN pd.discount_percent IS NOT NULL
-                    THEN ROUND(p.price * (1 - pd.discount_percent), 2)
+                    THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
                     ELSE p.price
                 END AS price,
                 pd.discount_percent,
@@ -918,7 +918,7 @@ async def product_filters():
                     SELECT
                         CASE
                             WHEN pd.discount_percent IS NOT NULL
-                            THEN ROUND(p.price * (1 - pd.discount_percent), 2)
+                            THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
                             ELSE p.price
                         END AS final_price
                     FROM products p
@@ -958,7 +958,7 @@ async def get_product(product_id: str):
                     p.price AS original_price,
                     CASE
                         WHEN pd.discount_percent IS NOT NULL
-                        THEN ROUND(p.price * (1 - pd.discount_percent), 2)
+                        THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
                         ELSE p.price
                     END AS price,
                     pd.discount_percent,
@@ -1381,7 +1381,7 @@ async def create_checkout(
                         p.price AS original_price,
                         CASE
                             WHEN pd.discount_percent IS NOT NULL
-                            THEN ROUND(p.price * (1 - pd.discount_percent), 2)
+                            THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
                             ELSE p.price
                         END AS price,
                         pd.discount_percent,
@@ -1501,8 +1501,11 @@ async def create_checkout(
                     "allowed_countries": ["PL"],
                 },
 
-                "success_url": f"{payload.origin_url}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
-                "cancel_url": f"{payload.origin_url}/cart",
+                "success_url": (
+                    f"{PUBLIC_SITE_URL}/checkout/success"
+                    "?session_id={CHECKOUT_SESSION_ID}"
+                ),
+                "cancel_url": f"{PUBLIC_SITE_URL}/cart",
 
                 "metadata": {
                     "order_id": str(order_id),
