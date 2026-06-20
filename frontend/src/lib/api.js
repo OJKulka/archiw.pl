@@ -82,9 +82,10 @@ export const fetchFilters = async () => {
   }
 };
 
-export const createCheckout = async (items) => {
+export const createCheckout = async (items, originUrl) => {
   const { data } = await api.post("/checkout/session", {
     items,
+    origin_url: originUrl,
   });
 
   return data;

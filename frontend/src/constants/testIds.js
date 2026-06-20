@@ -1,12 +1,9 @@
-export const HOME = {
-  emergentLink: "emergent-link",
-};
-
 export const NAV = {
   logo: "nav-logo",
   linkNew: "nav-new",
   linkSale: "nav-sale",
   linkInstagram: "nav-instagram",
+  adminPanel: "admin-panel",
   searchInput: "nav-search-input",
   searchButton: "nav-search-button",
   accountButton: "nav-account-button",
@@ -21,7 +18,6 @@ export const NAV = {
 
 export const FILTER = {
   panel: "filter-panel",
-  priceSlider: "filter-price-slider",
   priceMin: "filter-price-min",
   priceMax: "filter-price-max",
   categoryGroup: "filter-category-group",

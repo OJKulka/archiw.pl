@@ -70,12 +70,13 @@ export const Header = () => {
           >
             {t.nav.instagram}
           </a>
+
           {user?.role === "admin" && (
             <Link
               to="/admin"
-              className="text-sm font-medium text-[#C25934] transition-colors hover:text-[#1A1A1A]"
+              className="text-sm uppercase tracking-[0.2em] text-[#1A1A1A] hover:text-[#C25934] transition-colors"
             >
-              AdminPanel
+              {t.nav.adminPanel}
             </Link>
           )}
         </nav>
@@ -221,7 +222,7 @@ export const Header = () => {
               to="/admin"
               className="text-sm uppercase tracking-[0.2em] text-[#1A1A1A] hover:text-[#C25934] transition-colors"
             >
-              AdminPanel
+              {t.nav.adminPanel}
             </Link>
           )}
         </nav>

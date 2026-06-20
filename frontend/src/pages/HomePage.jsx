@@ -46,6 +46,7 @@ export default function HomePage() {
     sizes: [],
     price: null,
   });
+  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState("newest");

@@ -4,6 +4,7 @@ export const translations = {
       new: "Nowości",
       sale: "Promocje",
       instagram: "Instagram",
+      adminPanel: "Panel admina",
       search: "Szukaj...",
       account: "Konto",
       login: "Zaloguj",
@@ -113,6 +114,152 @@ export const translations = {
       copy: "© ARCHIW 2026",
       tagline: "Vintage & Designer",
     },
+
+    admin: {
+      title: "Panel Administratora",
+
+      sidebar: {
+        navigation: "Nawigacja panelu administratora",
+        products: "Produkty",
+        addProduct: "Dodaj produkt",
+        categories: "Kategorie",
+        orders: "Zamówienia",
+        users: "Użytkownicy",
+      },
+    
+      stats: {
+        products: "Produkty",
+        active: "aktywne",
+        summary: "{all} produktów, {active} aktywnych",
+      },
+    
+      actions: {
+        refresh: "Odśwież",
+        add: "Dodaj",
+        addProduct: "Dodaj produkt",
+        saveChanges: "Zapisz zmiany",
+        saving: "Zapisywanie...",
+        edit: "Edytuj",
+        cancelEdit: "Anuluj edycję",
+        backToProducts: "Wróć do produktów",
+        disable: "Wyłącz",
+        deleteImage: "Usuń zdjęcie",
+      },
+
+      form: {
+        newProduct: "Nowy produkt",
+        productNumber: "Produkt #{id}",
+        editProduct: "Edytuj produkt",
+        addProduct: "Dodaj produkt",
+        requiredFields: "Pola oznaczone gwiazdką są wymagane.",
+
+        sections: {
+          productData: "Dane produktu",
+          categoriesVisibility: "Kategorie i widoczność",
+          discount: "Promocja",
+          images: "Zdjęcia",
+        },
+
+        fields: {
+          name: "Nazwa",
+          price: "Cena w PLN",
+          brand: "Marka",
+          size: "Rozmiar",
+          gender: "Płeć",
+          stock: "Stan magazynowy",
+          description: "Opis",
+          categories: "Kategorie",
+          discountPercent: "Rabat w %",
+          discountStart: "Początek",
+          discountEnd: "Koniec",
+          categoryName: "Nazwa kategorii",
+        },
+
+        placeholders: {
+          name: "Np. Vintage Levi's 501",
+          price: "0.00",
+          brand: "Np. Levi's",
+          size: "Np. M, 32/32",
+          categoryName: "Nazwa kategorii",
+        },
+
+        gender: {
+          unisex: "Unisex",
+          men: "Męskie",
+          women: "Damskie",
+        },
+
+        visibility: {
+          activeTitle: "Produkt aktywny",
+          activeDescription: "Widoczny w sklepie",
+          newTitle: "Nowość",
+          newDescription: "Oznaczenie nowego produktu",
+        },
+
+        discount: {
+          enable: "Włącz promocję dla tego produktu",
+        },
+
+        images: {
+          description:
+            "Pierwsze zdjęcie będzie głównym zdjęciem produktu.",
+          choose: "Wybierz zdjęcia produktu",
+          supportedFormats:
+            "JPG, PNG, WEBP, BMP, GIF lub TIFF, maksymalnie 10 MB",
+          selectedFiles: "Wybrane pliki: {count}",
+        },
+      },
+
+      categories: {
+        empty: "Brak kategorii w bazie.",
+        addTitle: "Dodaj kategorię",
+        addDescription:
+          "Nowa kategoria pojawi się w formularzu produktu.",
+        listTitle: "Lista kategorii",
+        loading: "Pobieranie kategorii...",
+        count: "Liczba kategorii: {count}",
+      },
+
+      products: {
+        title: "Produkty",
+        editHint:
+          "Kliknij „Edytuj”, aby wczytać dane do formularza.",
+        loading: "Pobieranie produktów...",
+        empty: "Nie ma jeszcze żadnych produktów.",
+        noImage: "Brak zdjęcia",
+        noBrand: "Bez marki",
+        noSize: "Brak rozmiaru",
+        stock: "stan",
+        active: "Aktywny",
+        disabled: "Wyłączony",
+        new: "Nowość",
+      },
+
+      confirm: {
+        disableProduct: "Wyłączyć produkt „{name}”?",
+        deleteImage: "Usunąć to zdjęcie?",
+      },
+
+      success: {
+        productUpdated: "Produkt został zaktualizowany.",
+        productCreated: "Produkt został dodany.",
+        productDisabled: "Produkt został wyłączony.",
+        imageDeleted: "Zdjęcie zostało usunięte.",
+        categoryCreated: "Kategoria została dodana.",
+      },
+
+      error: {
+        panelLoad: "Nie udało się pobrać panelu administratora",
+        invalidProduct: "Podaj prawidłową nazwę i cenę produktu",
+        invalidDiscount:
+          "Rabat musi być większy od 0 i mniejszy od 100%",
+        productSave: "Nie udało się zapisać produktu",
+        productDisable: "Nie udało się wyłączyć produktu",
+        imageDelete: "Nie udało się usunąć zdjęcia",
+        categoryCreate: "Nie udało się dodać kategorii",
+        categoriesLoad: "Nie udało się pobrać kategorii",
+      },
+    },
   },
 
   en: {
@@ -120,6 +267,7 @@ export const translations = {
       new: "New",
       sale: "Sale",
       instagram: "Instagram",
+      adminPanel: "Admin panel",
       search: "Search...",
       account: "Account",
       login: "Log in",
@@ -228,6 +376,154 @@ export const translations = {
       privacy: "Privacy",
       copy: "© ARCHIW 2026",
       tagline: "Vintage & Designer",
+    },
+
+    admin: {
+      title: "Admin Panel",
+
+      sidebar: {
+        navigation: "Admin panel navigation",
+        products: "Products",
+        addProduct: "Add product",
+        categories: "Categories",
+        orders: "Orders",
+        users: "Users",
+      },
+    
+      stats: {
+        products: "Products",
+        active: "active",
+        summary: "{all} products, {active} active",
+      },
+    
+      actions: {
+        refresh: "Refresh",
+        add: "Add",
+        addProduct: "Add product",
+        saveChanges: "Save changes",
+        saving: "Saving...",
+        edit: "Edit",
+        cancelEdit: "Cancel editing",
+        backToProducts: "Back to products",
+        disable: "Disable",
+        deleteImage: "Delete image",
+      },
+
+      form: {
+        newProduct: "New product",
+        productNumber: "Product #{id}",
+        editProduct: "Edit product",
+        addProduct: "Add product",
+        requiredFields:
+          "Fields marked with an asterisk are required.",
+
+        sections: {
+          productData: "Product details",
+          categoriesVisibility: "Categories and visibility",
+          discount: "Discount",
+          images: "Images",
+        },
+
+        fields: {
+          name: "Name",
+          price: "Price in PLN",
+          brand: "Brand",
+          size: "Size",
+          gender: "Gender",
+          stock: "Stock",
+          description: "Description",
+          categories: "Categories",
+          discountPercent: "Discount in %",
+          discountStart: "Start",
+          discountEnd: "End",
+          categoryName: "Category name",
+        },
+
+        placeholders: {
+          name: "E.g. Vintage Levi's 501",
+          price: "0.00",
+          brand: "E.g. Levi's",
+          size: "E.g. M, 32/32",
+          categoryName: "Category name",
+        },
+
+        gender: {
+          unisex: "Unisex",
+          men: "Men",
+          women: "Women",
+        },
+
+        visibility: {
+          activeTitle: "Active product",
+          activeDescription: "Visible in the store",
+          newTitle: "New",
+          newDescription: "Marks the product as new",
+        },
+
+        discount: {
+          enable: "Enable a discount for this product",
+        },
+
+        images: {
+          description:
+            "The first image will be the main product image.",
+          choose: "Choose product images",
+          supportedFormats:
+            "JPG, PNG, WEBP, BMP, GIF or TIFF, maximum 10 MB",
+          selectedFiles: "Selected files: {count}",
+        },
+      },
+
+      categories: {
+          empty: "No categories in the database.",
+          addTitle: "Add category",
+          addDescription:
+            "The new category will appear in the product form.",
+          listTitle: "Category list",
+          loading: "Loading categories...",
+          count: "Categories: {count}",
+        },
+
+      products: {
+        title: "Products",
+        editHint:
+          "Click “Edit” to load the data into the form.",
+        loading: "Loading products...",
+        empty: "There are no products yet.",
+        noImage: "No image",
+        noBrand: "No brand",
+        noSize: "No size",
+        stock: "stock",
+        active: "Active",
+        disabled: "Disabled",
+        new: "New",
+      },
+
+      confirm: {
+        disableProduct: "Disable product “{name}”?",
+        deleteImage: "Delete this image?",
+      },
+
+      success: {
+        productUpdated: "The product has been updated.",
+        productCreated: "The product has been added.",
+        productDisabled: "The product has been disabled.",
+        imageDeleted: "The image has been deleted.",
+        categoryCreated: "The category has been added.",
+      },
+
+      error: {
+        panelLoad: "Failed to load the admin panel",
+        invalidProduct:
+          "Enter a valid product name and price",
+        invalidDiscount:
+          "The discount must be greater than 0 and less than 100%",
+        productSave: "Failed to save the product",
+        productDisable: "Failed to disable the product",
+        imageDelete: "Failed to delete the image",
+        categoryCreate: "Failed to add the category",
+        categoriesLoad: "Failed to load categories",
+      },
     },
   },
 };
