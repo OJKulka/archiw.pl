@@ -79,6 +79,24 @@ app.add_exception_handler(
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+@app.middleware("http")
+async def add_security_headers(
+    request: Request,
+    call_next,
+):
+    response = await call_next(request)
+
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = (
+        "strict-origin-when-cross-origin"
+    )
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=()"
+    )
+
+    return response
+
 
 def get_db():
     return pymysql.connect(
@@ -95,7 +113,7 @@ def get_db():
 
 class RegisterReq(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=12, max_length=32)
     name: Optional[str] = None
 
 
@@ -603,8 +621,11 @@ async def root():
 @api_router.post("/auth/register")
 async def register(payload: RegisterReq):
     email = payload.email.lower().strip()
-    if len(payload.password) < 6:
-        raise HTTPException(400, "Password must have at least 6 characters")
+    if not 12 <= len(payload.password) <= 32:
+    raise HTTPException(
+        400,
+        "Password must have between 12 and 32 characters",
+    )
 
     conn = get_db()
     try:
