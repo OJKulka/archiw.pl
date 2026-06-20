@@ -111,7 +111,6 @@ class CartItemIn(BaseModel):
 
 class CheckoutReq(BaseModel):
     items: List[CartItemIn]
-    origin_url: str
 
 
 class AdminDiscountIn(BaseModel):
@@ -1484,8 +1483,10 @@ async def create_checkout(payload: CheckoutReq, user=Depends(get_current_user)):
                     "allowed_countries": ["PL"],
                 },
 
-                "success_url": f"{payload.origin_url}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
-                "cancel_url": f"{payload.origin_url}/cart",
+                success_url=(
+                    f"{PUBLIC_SITE_URL}/checkout/success"
+                    "?session_id={{CHECKOUT_SESSION_ID}}"
+                ),
 
                 "metadata": {
                     "order_id": str(order_id),
