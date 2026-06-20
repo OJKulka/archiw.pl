@@ -22,6 +22,11 @@ from slowapi.util import get_remote_address
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
+PUBLIC_SITE_URL = os.environ.get(
+    "PUBLIC_SITE_URL",
+    "https://archiw.pl",
+).rstrip("/")
+
 def get_rate_limit_ip(request: Request) -> str:
     return (
         request.headers.get("CF-Connecting-IP")
