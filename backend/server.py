@@ -1,7 +1,4 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, Request, UploadFile, File
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -18,16 +15,9 @@ import stripe
 import re
 import unicodedata
 from uuid import uuid4
-from io import BytesIO
-from PIL import Image, ImageOps, UnidentifiedImageError
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
-
-PUBLIC_SITE_URL = os.environ.get(
-    "PUBLIC_SITE_URL",
-    "https://archiw.pl",
-).rstrip("/")
 
 WEB_ROOT = Path(
     os.environ.get("WEB_ROOT", r"C:\www")
@@ -44,36 +34,9 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 stripe.api_key = STRIPE_SECRET_KEY
 
-def get_client_ip(request: Request) -> str:
-    return (
-        request.headers.get("CF-Connecting-IP")
-        or get_remote_address(request)
-    )
-
-
-limiter = Limiter(key_func=get_client_ip)
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
-
-app.state.limiter = limiter
-app.add_exception_handler(
-    RateLimitExceeded,
-    _rate_limit_exceeded_handler,
-)
-
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
-
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = (
-        "camera=(), microphone=(), geolocation=()"
-    )
-
-    return response
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -110,6 +73,7 @@ class CartItemIn(BaseModel):
 
 class CheckoutReq(BaseModel):
     items: List[CartItemIn]
+    origin_url: str
 
 
 class AdminDiscountIn(BaseModel):
@@ -160,25 +124,8 @@ class AdminImageDelete(BaseModel):
     image_path: str
 
 
-def _validate_password(password: str):
-    if len(password) < 12:
-        raise HTTPException(
-            status_code=400,
-            detail="Hasło musi mieć co najmniej 12 znaków",
-        )
-
-    if len(password) > 64:
-        raise HTTPException(
-            status_code=400,
-            detail="Hasło może mieć maksymalnie 64 znaki",
-        )
-
-
 def _hash_pw(password: str) -> str:
-    return bcrypt.hashpw(
-        password.encode("utf-8"),
-        bcrypt.gensalt(),
-    ).decode("utf-8")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def _verify_pw(password: str, hashed: str) -> bool:
@@ -264,88 +211,6 @@ def _fields_set(model) -> set:
         )
     )
 
-MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
-MAX_IMAGE_PIXELS = 20_000_000
-
-Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
-
-
-def _prepare_product_image(content: bytes) -> bytes:
-    if not content:
-        raise HTTPException(
-            status_code=400,
-            detail="Plik obrazu jest pusty",
-        )
-
-    if len(content) > MAX_IMAGE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=400,
-            detail="Obraz nie może być większy niż 10 MB",
-        )
-
-    try:
-        # Sprawdzenie, czy plik rzeczywiście jest obrazem.
-        with Image.open(BytesIO(content)) as image:
-            image.verify()
-
-        # Po verify() trzeba otworzyć obraz ponownie.
-        with Image.open(BytesIO(content)) as source_image:
-            source_image.seek(0)
-
-            image = ImageOps.exif_transpose(source_image)
-
-            if image.width <= 0 or image.height <= 0:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Obraz ma nieprawidłowe wymiary",
-                )
-
-            if image.width * image.height > MAX_IMAGE_PIXELS:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Obraz ma zbyt dużą rozdzielczość",
-                )
-
-            image.load()
-
-            has_transparency = (
-                "A" in image.getbands()
-                or (
-                    image.mode == "P"
-                    and "transparency" in image.info
-                )
-            )
-
-            if has_transparency:
-                image = image.convert("RGBA")
-            else:
-                image = image.convert("RGB")
-
-            output = BytesIO()
-
-            image.save(
-                output,
-                format="WEBP",
-                quality=82,
-                method=6,
-            )
-
-            return output.getvalue()
-
-    except HTTPException:
-        raise
-
-    except (
-        UnidentifiedImageError,
-        Image.DecompressionBombError,
-        OSError,
-        ValueError,
-        SyntaxError,
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail="Przesłany plik nie jest prawidłowym obrazem",
-        )
 
 def _slugify(value: str) -> str:
     value = unicodedata.normalize("NFKD", value)
@@ -701,7 +566,8 @@ async def root():
 @api_router.post("/auth/register")
 async def register(payload: RegisterReq):
     email = payload.email.lower().strip()
-    _validate_password(payload.password)
+    if len(payload.password) < 6:
+        raise HTTPException(400, "Password must have at least 6 characters")
 
     conn = get_db()
     try:
@@ -731,8 +597,7 @@ async def register(payload: RegisterReq):
 
 
 @api_router.post("/auth/login")
-@limiter.limit("5/minute")
-async def login(request: Request, payload: LoginReq):
+async def login(payload: LoginReq):
     email = payload.email.lower().strip()
     conn = get_db()
     try:
@@ -808,7 +673,7 @@ async def list_products(
                 p.price AS original_price,
                 CASE
                     WHEN pd.discount_percent IS NOT NULL
-                    THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
+                    THEN ROUND(p.price * (1 - pd.discount_percent), 2)
                     ELSE p.price
                 END AS price,
                 pd.discount_percent,
@@ -1002,7 +867,7 @@ async def product_filters():
                     SELECT
                         CASE
                             WHEN pd.discount_percent IS NOT NULL
-                            THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
+                            THEN ROUND(p.price * (1 - pd.discount_percent), 2)
                             ELSE p.price
                         END AS final_price
                     FROM products p
@@ -1042,7 +907,7 @@ async def get_product(product_id: str):
                     p.price AS original_price,
                     CASE
                         WHEN pd.discount_percent IS NOT NULL
-                        THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
+                        THEN ROUND(p.price * (1 - pd.discount_percent), 2)
                         ELSE p.price
                     END AS price,
                     pd.discount_percent,
@@ -1334,10 +1199,21 @@ async def admin_upload_product_image(
     sort_order: int = 0,
     admin=Depends(require_admin),
 ):
-    
-    
+    allowed_types = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+    }
+
+    extension = allowed_types.get(image.content_type or "")
+    if not extension:
+        raise HTTPException(400, "Only JPG, PNG and WEBP files are allowed")
+
     content = await image.read()
-    webp_content = _prepare_product_image(content)
+    if not content:
+        raise HTTPException(400, "Empty image file")
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(400, "Image cannot be larger than 10 MB")
 
     upload_dir = Path(
         os.environ.get(
@@ -1351,7 +1227,7 @@ async def admin_upload_product_image(
     ).rstrip("/")
 
     upload_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{product_id}-{uuid4().hex}.webp"
+    filename = f"{product_id}-{uuid4().hex}{extension}"
     file_path = PRODUCT_IMAGE_DIR / filename
     image_path = f"{PRODUCT_IMAGE_URL_PREFIX}/{filename}"
 
@@ -1362,7 +1238,7 @@ async def admin_upload_product_image(
             if not cur.fetchone():
                 raise HTTPException(404, "Product not found")
 
-            file_path.write_bytes(webp_content)
+            file_path.write_bytes(content)
 
             cur.execute(
                 """
@@ -1425,12 +1301,7 @@ async def admin_delete_product_image(
 
 
 @api_router.post("/checkout/session")
-@limiter.limit("10/minute")
-async def create_checkout(
-    request: Request,
-    payload: CheckoutReq,
-    user=Depends(get_current_user),
-):
+async def create_checkout(payload: CheckoutReq, user=Depends(get_current_user)):
     if not STRIPE_SECRET_KEY:
         raise HTTPException(500, "Stripe not configured")
     if not payload.items:
@@ -1454,7 +1325,7 @@ async def create_checkout(
                         p.price AS original_price,
                         CASE
                             WHEN pd.discount_percent IS NOT NULL
-                            THEN ROUND(p.price * (1 - (pd.discount_percent / 100)), 2)
+                            THEN ROUND(p.price * (1 - pd.discount_percent), 2)
                             ELSE p.price
                         END AS price,
                         pd.discount_percent,
@@ -1574,11 +1445,8 @@ async def create_checkout(
                     "allowed_countries": ["PL"],
                 },
 
-                "success_url": (
-                    f"{PUBLIC_SITE_URL}/checkout/success"
-                    "?session_id={CHECKOUT_SESSION_ID}"
-                ),
-                "cancel_url": f"{PUBLIC_SITE_URL}/cart",
+                "success_url": f"{payload.origin_url}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
+                "cancel_url": f"{payload.origin_url}/cart",
 
                 "metadata": {
                     "order_id": str(order_id),
