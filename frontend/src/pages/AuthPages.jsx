@@ -167,7 +167,8 @@ export function RegisterPage() {
             data-testid={AUTH.registerPassword}
             type="password"
             required
-            minLength={6}
+            minLength={12}
+            maxLength={32}
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             className="w-full border-b border-[#1A1A1A] bg-transparent py-2 outline-none focus:border-[#C25934] transition-colors"
