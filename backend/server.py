@@ -61,21 +61,6 @@ stripe.api_key = STRIPE_SECRET_KEY
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-def get_rate_limit_ip(request: Request) -> str:
-    return (
-        request.headers.get("CF-Connecting-IP")
-        or get_remote_address(request)
-    )
-
-
-limiter = Limiter(key_func=get_rate_limit_ip)
-
-app.state.limiter = limiter
-app.add_exception_handler(
-    RateLimitExceeded,
-    _rate_limit_exceeded_handler,
-)
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -622,10 +607,10 @@ async def root():
 async def register(payload: RegisterReq):
     email = payload.email.lower().strip()
     if not 12 <= len(payload.password) <= 32:
-    raise HTTPException(
-        400,
-        "Password must have between 12 and 32 characters",
-    )
+        raise HTTPException(
+            400,
+            "Password must have between 12 and 32 characters",
+        )
 
     conn = get_db()
     try:
