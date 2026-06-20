@@ -61,21 +61,6 @@ stripe.api_key = STRIPE_SECRET_KEY
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-def get_rate_limit_ip(request: Request) -> str:
-    return (
-        request.headers.get("CF-Connecting-IP")
-        or get_remote_address(request)
-    )
-
-
-limiter = Limiter(key_func=get_rate_limit_ip)
-
-app.state.limiter = limiter
-app.add_exception_handler(
-    RateLimitExceeded,
-    _rate_limit_exceeded_handler,
-)
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
