@@ -491,7 +491,7 @@ def _update_order_after_stripe_session(session_id: str) -> dict:
                     SET status = 'paid',
                         provider_payment_intent_id = %s
                     WHERE order_id = %s
-                      AND provider_session_id = %s
+                        AND provider_session_id = %s
                     """,
                     (str(payment_intent_id) if payment_intent_id else None, order_id, session_id),
                 )
@@ -532,7 +532,7 @@ def _update_order_after_stripe_session(session_id: str) -> dict:
                         SELECT product_id, quantity
                         FROM order_items
                         WHERE order_id = %s
-                          AND product_id IS NOT NULL
+                            AND product_id IS NOT NULL
                         """,
                         (order_id,),
                     )
@@ -553,7 +553,7 @@ def _update_order_after_stripe_session(session_id: str) -> dict:
                             UPDATE products
                             SET is_active = 0
                             WHERE id = %s
-                              AND stock <= 0
+                                AND stock <= 0
                             """,
                             (item["product_id"],),
                         )
@@ -730,7 +730,7 @@ async def list_products(
                 GROUP_CONCAT(DISTINCT c.slug) AS categories
             FROM products p
             LEFT JOIN product_discounts pd
-                 ON pd.product_id = p.id
+                ON pd.product_id = p.id
                 AND pd.is_active = 1
                 AND (pd.starts_at IS NULL OR pd.starts_at <= NOW())
                 AND (pd.ends_at IS NULL OR pd.ends_at >= NOW())
@@ -916,9 +916,9 @@ async def product_filters():
                     FROM products p
                     LEFT JOIN product_discounts pd
                         ON pd.product_id = p.id
-                       AND pd.is_active = 1
-                       AND (pd.starts_at IS NULL OR pd.starts_at <= NOW())
-                       AND (pd.ends_at IS NULL OR pd.ends_at >= NOW())
+                        AND pd.is_active = 1
+                        AND (pd.starts_at IS NULL OR pd.starts_at <= NOW())
+                        AND (pd.ends_at IS NULL OR pd.ends_at >= NOW())
                     WHERE p.is_active = 1
                 ) prices
                 """
@@ -965,13 +965,13 @@ async def get_product(product_id: str):
                 FROM products p
                 LEFT JOIN product_discounts pd
                     ON pd.product_id = p.id
-                   AND pd.is_active = 1
-                   AND (pd.starts_at IS NULL OR pd.starts_at <= NOW())
-                   AND (pd.ends_at IS NULL OR pd.ends_at >= NOW())
+                    AND pd.is_active = 1
+                    AND (pd.starts_at IS NULL OR pd.starts_at <= NOW())
+                    AND (pd.ends_at IS NULL OR pd.ends_at >= NOW())
                 LEFT JOIN product_categories pc ON pc.product_id = p.id
                 LEFT JOIN categories c ON c.id = pc.category_id
                 WHERE (CAST(p.id AS CHAR) = %s OR p.slug = %s)
-                  AND p.is_active = 1
+                    AND p.is_active = 1
                 GROUP BY p.id
                 LIMIT 1
                 """,
@@ -1385,9 +1385,9 @@ async def create_checkout(payload: CheckoutReq, user=Depends(get_current_user)):
                     FROM products p
                     LEFT JOIN product_discounts pd
                         ON pd.product_id = p.id
-                       AND pd.is_active = 1
-                       AND (pd.starts_at IS NULL OR pd.starts_at <= NOW())
-                       AND (pd.ends_at IS NULL OR pd.ends_at >= NOW())
+                        AND pd.is_active = 1
+                        AND (pd.starts_at IS NULL OR pd.starts_at <= NOW())
+                        AND (pd.ends_at IS NULL OR pd.ends_at >= NOW())
                     WHERE p.id = %s AND p.is_active = 1
                     LIMIT 1
                     """,
