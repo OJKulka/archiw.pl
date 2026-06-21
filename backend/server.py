@@ -34,6 +34,9 @@ def get_rate_limit_ip(request: Request) -> str:
     )
 
 
+app = FastAPI()
+api_router = APIRouter(prefix="/api")
+
 limiter = Limiter(key_func=get_rate_limit_ip)
 
 app.state.limiter = limiter
@@ -56,10 +59,6 @@ JWT_ALG = "HS256"
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 stripe.api_key = STRIPE_SECRET_KEY
-
-
-app = FastAPI()
-api_router = APIRouter(prefix="/api")
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -607,10 +606,10 @@ async def root():
 async def register(payload: RegisterReq):
     email = payload.email.lower().strip()
     if not 12 <= len(payload.password) <= 32:
-    raise HTTPException(
-        400,
-        "Password must have between 12 and 32 characters",
-    )
+        raise HTTPException(
+            400,
+            "Password must have between 12 and 32 characters",
+        )
 
     conn = get_db()
     try:
@@ -717,7 +716,7 @@ async def list_products(
                 p.price AS original_price,
                 CASE
                     WHEN pd.discount_percent IS NOT NULL
-                    THEN ROUND(p.price * (1 - pd.discount_percent), 2)
+                    THEN ROUND(p.price * (1 - pd.discount_percent) / 100, 2)
                     ELSE p.price
                 END AS price,
                 pd.discount_percent,
@@ -1489,7 +1488,7 @@ async def create_checkout(payload: CheckoutReq, user=Depends(get_current_user)):
                     "allowed_countries": ["PL"],
                 },
 
-                success_url=(
+                "success_url": (
                     f"{PUBLIC_SITE_URL}/checkout/success"
                     "?session_id={{CHECKOUT_SESSION_ID}}"
                 ),
